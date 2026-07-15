@@ -13,7 +13,9 @@ const ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-maskable-512.png',
+  './assets/header-dark.jpg',
+  './assets/header-light.jpg'
 ];
 
 self.addEventListener('install', event => {

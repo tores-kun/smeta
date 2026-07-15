@@ -5,6 +5,7 @@ const LS_ESTIMATES = 'smeta:estimates';
 const LS_ACTIVE = 'smeta:activeId';
 const LS_HIDDEN = 'smeta:hiddenCodes';
 const LS_SHOW_ALL = 'smeta:showAllMode';
+const LS_PRINT_HEADER = 'smeta:printHeaderTheme';
 
 let priceData = null;      // {categories:[{id,title,items:[{code,name,unit,price,custom}]}]}
 let estimates = {};        // {id: estimate}
@@ -14,6 +15,7 @@ let searchQuery = '';
 let hiddenCodes = new Set();   // коды позиций, скрытых пользователем из основного списка
 let showAllMode = false;       // false = показывать только "Мои" (не скрытые), true = "Все"
 let settingsSearchQuery = '';
+let printHeaderTheme = 'dark'; // 'dark' | 'light' — какую картинку вставлять в шапку печати/PDF
 
 // ---------- storage ----------
 
@@ -62,6 +64,14 @@ function saveShowAllMode() {
   localStorage.setItem(LS_SHOW_ALL, showAllMode ? '1' : '0');
 }
 
+function loadPrintHeaderTheme() {
+  const v = localStorage.getItem(LS_PRINT_HEADER);
+  return (v === 'light' || v === 'dark') ? v : 'dark';
+}
+function savePrintHeaderTheme() {
+  localStorage.setItem(LS_PRINT_HEADER, printHeaderTheme);
+}
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -92,6 +102,7 @@ function init() {
   estimates = loadEstimates();
   hiddenCodes = loadHiddenCodes();
   showAllMode = loadShowAllMode();
+  printHeaderTheme = loadPrintHeaderTheme();
 
   activeId = localStorage.getItem(LS_ACTIVE);
   if (!activeId || !estimates[activeId]) {
@@ -353,6 +364,13 @@ function bindEvents() {
   document.getElementById('settingsBtn').addEventListener('click', openSettings);
   document.getElementById('settingsBackBtn').addEventListener('click', closeSettings);
   document.getElementById('settingsAddBtn').addEventListener('click', () => openAddItemModal());
+  document.querySelectorAll('.print-header-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      printHeaderTheme = btn.dataset.theme;
+      savePrintHeaderTheme();
+      renderPrintHeaderPicker();
+    });
+  });
   document.getElementById('settingsShowAllBtn').addEventListener('click', () => {
     if (confirm('Показать все скрытые позиции?')) {
       hiddenCodes.clear();
@@ -598,7 +616,14 @@ function openSettings() {
   settingsSearchQuery = '';
   document.getElementById('settingsSearchInput').value = '';
   renderSettingsContent();
+  renderPrintHeaderPicker();
   document.getElementById('settingsScreen').classList.remove('hidden');
+}
+
+function renderPrintHeaderPicker() {
+  document.querySelectorAll('.print-header-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === printHeaderTheme);
+  });
 }
 function closeSettings() {
   document.getElementById('settingsScreen').classList.add('hidden');
@@ -789,9 +814,9 @@ function printEstimate() {
   const itemsCount = rows.filter(r => r.type === 'item').length;
 
   let html = `
+    <div class="print-banner"><img src="assets/header-${printHeaderTheme}.jpg" alt="Смета электрика" class="print-banner-img"></div>
     <div class="print-header">
       <div class="print-titleblock">
-        <div class="print-brand"><span class="bolt">⚡</span><span>Смета электрика</span></div>
         <h1>${escapeHtml(est.name)}</h1>
         <div class="subtitle">Смета на электромонтажные работы &nbsp;·&nbsp; ${itemsCount} ${itemsWord(itemsCount)}</div>
       </div>
