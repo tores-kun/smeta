@@ -43,6 +43,7 @@ function saveEstimates() {
 
 function saveActiveId() {
   if (activeId) localStorage.setItem(LS_ACTIVE, activeId);
+  else localStorage.removeItem(LS_ACTIVE);
 }
 
 function loadHiddenCodes() {
@@ -92,15 +93,10 @@ function init() {
   hiddenCodes = loadHiddenCodes();
   showAllMode = loadShowAllMode();
 
-  if (Object.keys(estimates).length === 0) {
-    const e = newEstimateObj('Смета 1');
-    estimates[e.id] = e;
-    saveEstimates();
-  }
-
   activeId = localStorage.getItem(LS_ACTIVE);
   if (!activeId || !estimates[activeId]) {
-    activeId = Object.keys(estimates).sort((a, b) => estimates[b].updatedAt - estimates[a].updatedAt)[0];
+    const remaining = Object.keys(estimates).sort((a, b) => estimates[b].updatedAt - estimates[a].updatedAt);
+    activeId = remaining.length > 0 ? remaining[0] : null;
   }
   saveActiveId();
 
@@ -112,24 +108,54 @@ function init() {
 }
 
 function activeEstimate() {
-  return estimates[activeId];
+  return activeId ? estimates[activeId] : null;
+}
+
+// Создаёт новую смету, делает её активной и сразу открывает форму «Данные сметы»,
+// чтобы смета не оставалась безымянной болванкой без клиента/адреса.
+function createNewEstimateFlow() {
+  const e = newEstimateObj('Смета ' + (Object.keys(estimates).length + 1));
+  estimates[e.id] = e;
+  activeId = e.id;
+  saveEstimates();
+  saveActiveId();
+  closeSideMenu();
+  renderAll();
+  openInfoModal();
 }
 
 // ---------- rendering ----------
 
 function renderAll() {
+  const hasEstimate = !!activeEstimate();
+  document.getElementById('searchBar').classList.toggle('hidden', !hasEstimate);
+  document.getElementById('comboBar').classList.toggle('hidden', !hasEstimate);
+  document.getElementById('content').classList.toggle('hidden', !hasEstimate);
+  document.querySelector('.totalbar').classList.toggle('hidden', !hasEstimate);
+  document.getElementById('emptyEstimateState').classList.toggle('hidden', hasEstimate);
+
   renderTopbar();
-  renderContent();
-  renderTotal();
+  if (hasEstimate) {
+    renderContent();
+    renderTotal();
+  }
 }
 
 function renderTopbar() {
   const est = activeEstimate();
+  const editBtn = document.getElementById('editInfoBtn');
+  if (!est) {
+    document.getElementById('estimateName').textContent = 'Нет активных смет';
+    document.getElementById('estimateSub').textContent = 'Нажмите, чтобы создать смету';
+    editBtn.classList.add('hidden');
+    return;
+  }
+  editBtn.classList.remove('hidden');
   document.getElementById('estimateName').textContent = est.name;
   const bits = [];
   if (est.client) bits.push(est.client);
   if (est.address) bits.push(est.address);
-  document.getElementById('estimateSub').textContent = bits.join(' · ') || 'Нажмите ⚙ для настроек';
+  document.getElementById('estimateSub').textContent = bits.join(' · ') || 'Нажмите ✏️ для данных сметы';
 }
 
 function matchesSearch(item) {
@@ -249,6 +275,7 @@ function renderTotal() {
 
 function computeTotal() {
   const est = activeEstimate();
+  if (!est) return 0;
   let total = 0;
   priceData.categories.forEach(cat => {
     cat.items.forEach(item => {
@@ -371,19 +398,15 @@ function bindEvents() {
   document.getElementById('menuBtn').addEventListener('click', openSideMenu);
   document.getElementById('closeMenuBtn').addEventListener('click', closeSideMenu);
   document.getElementById('sideMenuOverlay').addEventListener('click', closeSideMenu);
-  document.getElementById('newEstimateBtn').addEventListener('click', () => {
-    const e = newEstimateObj('Смета ' + (Object.keys(estimates).length + 1));
-    estimates[e.id] = e;
-    activeId = e.id;
-    saveEstimates();
-    saveActiveId();
-    closeSideMenu();
-    renderAll();
-    openInfoModal();
-  });
+  document.getElementById('newEstimateBtn').addEventListener('click', createNewEstimateFlow);
+  document.getElementById('emptyCreateEstimateBtn').addEventListener('click', createNewEstimateFlow);
 
-  // topbar title opens info modal
-  document.querySelector('.topbar-title').addEventListener('click', openInfoModal);
+  // topbar: клик по названию или по значку ✏️ открывает данные сметы;
+  // если активной сметы нет — сразу предлагаем создать новую
+  document.querySelector('.topbar-title').addEventListener('click', () => {
+    if (activeEstimate()) openInfoModal(); else createNewEstimateFlow();
+  });
+  document.getElementById('editInfoBtn').addEventListener('click', openInfoModal);
 
   // info modal
   document.getElementById('infoCancelBtn').addEventListener('click', closeInfoModal);
@@ -461,7 +484,7 @@ function setPrice(code, price) {
   found.item.price = price;
   savePriceData();
   const est = activeEstimate();
-  const qty = est.quantities[code] || 0;
+  const qty = est ? (est.quantities[code] || 0) : 0;
   const row = document.querySelector(`.item-row[data-code="${cssEscape(code)}"]`);
   if (row) {
     const lt = row.querySelector('[data-role="line-total"]');
@@ -475,7 +498,9 @@ function cssEscape(s) {
 }
 
 function touchEstimate() {
-  activeEstimate().updatedAt = Date.now();
+  const est = activeEstimate();
+  if (!est) return;
+  est.updatedAt = Date.now();
   saveEstimates();
 }
 
@@ -495,6 +520,9 @@ function renderSideMenu() {
   const list = document.getElementById('estimatesList');
   list.innerHTML = '';
   const sorted = Object.values(estimates).sort((a, b) => b.updatedAt - a.updatedAt);
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="estimates-list-empty">Смет пока нет — создайте первую</div>';
+  }
   sorted.forEach(est => {
     const total = estimateTotal(est);
     const card = document.createElement('div');
@@ -527,16 +555,13 @@ function renderSideMenu() {
   list.querySelectorAll('[data-action="delete-estimate"]').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (Object.keys(estimates).length <= 1) {
-        showToast('Нельзя удалить единственную смету');
-        return;
-      }
       if (confirm('Удалить эту смету безвозвратно?')) {
         const id = el.dataset.id;
         delete estimates[id];
         saveEstimates();
         if (activeId === id) {
-          activeId = Object.keys(estimates).sort((a, b) => estimates[b].updatedAt - estimates[a].updatedAt)[0];
+          const remaining = Object.keys(estimates).sort((a, b) => estimates[b].updatedAt - estimates[a].updatedAt);
+          activeId = remaining.length > 0 ? remaining[0] : null;
           saveActiveId();
         }
         renderSideMenu();
@@ -640,6 +665,7 @@ function renderSettingsItemRow(item) {
 
 function openInfoModal() {
   const est = activeEstimate();
+  if (!est) return;
   document.getElementById('infoName').value = est.name || '';
   document.getElementById('infoClient').value = est.client || '';
   document.getElementById('infoAddress').value = est.address || '';
@@ -654,6 +680,7 @@ function closeInfoModal() {
 }
 function saveInfoModal() {
   const est = activeEstimate();
+  if (!est) return;
   est.name = document.getElementById('infoName').value.trim() || 'Смета без названия';
   est.client = document.getElementById('infoClient').value.trim();
   est.address = document.getElementById('infoAddress').value.trim();

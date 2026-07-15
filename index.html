@@ -22,6 +22,7 @@
     <div id="estimateName" class="estimate-name">Смета</div>
     <div id="estimateSub" class="estimate-sub"></div>
   </div>
+  <button id="editInfoBtn" class="icon-btn" aria-label="Данные сметы" title="Данные сметы">✏️</button>
   <button id="settingsBtn" class="icon-btn" aria-label="Настройки">⚙</button>
 </header>
 
@@ -41,6 +42,13 @@
 <div id="comboBar" class="combo-bar"></div>
 
 <main id="content" class="content"></main>
+
+<div id="emptyEstimateState" class="empty-estimate-state hidden">
+  <div class="empty-estimate-icon">⚡</div>
+  <h2>Нет активных смет</h2>
+  <p>Создайте смету, чтобы начать расчёт</p>
+  <button id="emptyCreateEstimateBtn" class="btn btn-primary">+ Новая смета</button>
+</div>
 
 <footer class="totalbar">
   <div class="total-row">

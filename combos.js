@@ -17,10 +17,11 @@ const DEFAULT_COMBOS = [
       ] }
     ],
     inputs: [
-      { id: 'cable', label: 'Кабель на точку, м (1,5-2,5 мм²)', default: 0 },
-      { id: 'shtroba', label: 'Штроба на точку, м', default: 0 },
-      { id: 'korob', label: 'Короб на точку, м', default: 0 }
+      { id: 'cable', label: 'Кабель всего, м (1,5-2,5 мм²)', default: 0, isTotal: true },
+      { id: 'shtroba', label: 'Штроба всего, м', default: 0, isTotal: true },
+      { id: 'korob', label: 'Короб всего, м', default: 0, isTotal: true }
     ],
+    pointNoun: ['точку', 'точки', 'точек'],
     lines: [
       { code: '1.1', qty: 1, when: { material: 'beton', mount: 'flush' } },
       { code: '1.2', qty: 1, when: { material: 'kirpich', mount: 'flush' } },
@@ -28,11 +29,11 @@ const DEFAULT_COMBOS = [
       { code: '3.2', qty: 1, when: { mount: 'flush' } },
       { code: '3.3', qty: 1, when: { mount: 'flush' } },
       { code: '3.4', qty: 1, when: { mount: 'open' } },
-      { code: '2.4', fromInput: 'cable' },
-      { code: '1.4', fromInput: 'shtroba', when: { material: 'beton', mount: 'flush' } },
-      { code: '1.6', fromInput: 'shtroba', when: { material: 'kirpich', mount: 'flush' } },
-      { code: '1.8', fromInput: 'shtroba', when: { material: 'gs', mount: 'flush' } },
-      { code: '2.1', fromInput: 'korob', when: { mount: 'open' } }
+      { code: '2.4', fromInput: 'cable', skipMultiplier: true },
+      { code: '1.4', fromInput: 'shtroba', when: { material: 'beton', mount: 'flush' }, skipMultiplier: true },
+      { code: '1.6', fromInput: 'shtroba', when: { material: 'kirpich', mount: 'flush' }, skipMultiplier: true },
+      { code: '1.8', fromInput: 'shtroba', when: { material: 'gs', mount: 'flush' }, skipMultiplier: true },
+      { code: '2.1', fromInput: 'korob', when: { mount: 'open' }, skipMultiplier: true }
     ]
   },
   {
@@ -55,15 +56,16 @@ const DEFAULT_COMBOS = [
       ] }
     ],
     inputs: [
-      { id: 'route', label: 'Штроба/короб на точку, м', default: 3 },
-      { id: 'cable', label: 'Кабель на точку, м', default: 3 }
+      { id: 'route', label: 'Штроба/короб всего, м', default: 3, isTotal: true },
+      { id: 'cable', label: 'Кабель всего, м', default: 3, isTotal: true }
     ],
+    pointNoun: ['светильник', 'светильника', 'светильников'],
     lines: [
-      { code: '1.4', fromInput: 'route', when: { material: 'beton', routing: 'shtroba' } },
-      { code: '1.6', fromInput: 'route', when: { material: 'kirpich', routing: 'shtroba' } },
-      { code: '1.8', fromInput: 'route', when: { material: 'gs', routing: 'shtroba' } },
-      { code: '2.1', fromInput: 'route', when: { routing: 'korob' } },
-      { code: '2.4', fromInput: 'cable' },
+      { code: '1.4', fromInput: 'route', when: { material: 'beton', routing: 'shtroba' }, skipMultiplier: true },
+      { code: '1.6', fromInput: 'route', when: { material: 'kirpich', routing: 'shtroba' }, skipMultiplier: true },
+      { code: '1.8', fromInput: 'route', when: { material: 'gs', routing: 'shtroba' }, skipMultiplier: true },
+      { code: '2.1', fromInput: 'route', when: { routing: 'korob' }, skipMultiplier: true },
+      { code: '2.4', fromInput: 'cable', skipMultiplier: true },
       { code: '5.4', qty: 1, when: { fixture: 'tochechny' } },
       { code: '5.5', qty: 1, when: { fixture: 'bra' } },
       { code: '5.6', qty: 1, when: { fixture: 'slozhnaya' } },
@@ -148,15 +150,16 @@ const DEFAULT_COMBOS = [
       ] }
     ],
     inputs: [
-      { id: 'cable', label: 'Кабель на точку, м', default: 10 }
+      { id: 'cable', label: 'Кабель всего, м', default: 10, isTotal: true }
     ],
+    pointNoun: ['точку', 'точки', 'точек'],
     lines: [
       { code: '1.1', qty: 1, when: { material: 'beton' } },
       { code: '1.2', qty: 1, when: { material: 'kirpich' } },
       { code: '1.3', qty: 1, when: { material: 'gs' } },
       { code: '3.2', qty: 1 },
       { code: '7.3', qty: 1 },
-      { code: '7.1', fromInput: 'cable' },
+      { code: '7.1', fromInput: 'cable', skipMultiplier: true },
       { code: '7.7', qty: 1, when: { connector: 'yes' } }
     ]
   },

@@ -23,6 +23,15 @@ function renderComboBar() {
   });
 }
 
+function pluralizeRu(n, one, few, many) {
+  const mod10 = Math.abs(n) % 10;
+  const mod100 = Math.abs(n) % 100;
+  if (mod100 >= 11 && mod100 <= 14) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
+
 function matchesWhen(when, selections) {
   if (!when) return true;
   return Object.entries(when).every(([k, v]) => selections[k] === v);
@@ -37,7 +46,7 @@ function computeComboLines(combo, selections, inputValues, multiplier) {
     else if (line.fromInput) qty = Number(inputValues[line.fromInput]) || 0;
     else if (line.fromInputTimes) qty = (Number(inputValues[line.fromInputTimes.input]) || 0) * line.fromInputTimes.factor;
     else qty = 0;
-    qty = qty * multiplier;
+    if (!line.skipMultiplier) qty = qty * multiplier;
     if (qty <= 0) return;
     const found = findItem(line.code);
     if (!found) return;
@@ -87,14 +96,28 @@ function renderComboSheet() {
   (combo.inputs || []).forEach(input => {
     const group = document.createElement('div');
     group.className = 'combo-input-group';
-    group.innerHTML = `<label>${escapeHtml(input.label)}</label><input type="number" min="0" step="any" data-combo-input="${input.id}" value="${inputValues[input.id]}">`;
+    const hint = input.isTotal
+      ? `<div class="combo-input-hint" data-total-hint="${input.id}"></div>`
+      : '';
+    group.innerHTML = `<label>${escapeHtml(input.label)}</label><input type="number" min="0" step="any" data-combo-input="${input.id}" value="${inputValues[input.id]}">${hint}`;
     inputsEl.appendChild(group);
   });
 
   document.getElementById('comboMultiplierLabel').textContent = combo.multiplierLabel || 'Количество';
   document.getElementById('comboMultInput').value = multiplier;
 
+  updateComboTotalHints();
   renderComboPreview();
+}
+
+function updateComboTotalHints() {
+  if (!comboSheetState) return;
+  const { combo, multiplier } = comboSheetState;
+  if (!combo.pointNoun) return;
+  const noun = pluralizeRu(multiplier, combo.pointNoun[0], combo.pointNoun[1], combo.pointNoun[2]);
+  document.querySelectorAll('#comboSheetInputs [data-total-hint]').forEach(el => {
+    el.textContent = `на ${multiplier} ${noun} всего`;
+  });
 }
 
 function renderComboPreview() {
@@ -144,18 +167,21 @@ function bindComboEvents() {
     if (!comboSheetState) return;
     comboSheetState.multiplier = Math.max(1, comboSheetState.multiplier - 1);
     document.getElementById('comboMultInput').value = comboSheetState.multiplier;
+    updateComboTotalHints();
     renderComboPreview();
   });
   document.getElementById('comboMultInc').addEventListener('click', () => {
     if (!comboSheetState) return;
     comboSheetState.multiplier += 1;
     document.getElementById('comboMultInput').value = comboSheetState.multiplier;
+    updateComboTotalHints();
     renderComboPreview();
   });
   document.getElementById('comboMultInput').addEventListener('input', e => {
     if (!comboSheetState) return;
     const val = parseInt(e.target.value, 10);
     comboSheetState.multiplier = isNaN(val) || val < 1 ? 1 : val;
+    updateComboTotalHints();
     renderComboPreview();
   });
 
@@ -190,6 +216,7 @@ function applyTemplateCombo(combo) {
 
 function applyComboLines(lines, comboName) {
   const est = activeEstimate();
+  if (!est) return;
   const previous = {};
   lines.forEach(l => { previous[l.code] = est.quantities[l.code] || 0; });
   lines.forEach(l => {

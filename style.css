@@ -548,6 +548,28 @@ input, select, textarea { font-family: inherit; }
   font-size: 14px;
 }
 
+.empty-estimate-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 6px;
+}
+.empty-estimate-icon { font-size: 40px; margin-bottom: 8px; }
+.empty-estimate-state h2 { margin: 0; font-size: 18px; color: var(--text); }
+.empty-estimate-state p { margin: 0 0 14px; font-size: 14px; color: var(--text-muted); }
+.empty-estimate-state .btn { padding: 12px 24px; }
+
+.estimates-list-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 20px 10px;
+}
+
 .print-view { display: none; }
 
 @media print {
@@ -711,6 +733,11 @@ input, select, textarea { font-family: inherit; }
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
+}
+.combo-input-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 
 .combo-multiplier {
