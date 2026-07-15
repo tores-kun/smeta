@@ -550,6 +550,7 @@ input, select, textarea { font-family: inherit; }
   .print-view th:nth-child(4), .print-view th:nth-child(5), .print-view th:nth-child(6) { text-align: right; }
   .print-view .cat-row td { background: #f2f2f2; font-weight: 700; color: var(--primary-dark); }
   .print-view .total-row td { font-weight: 700; font-size: 13px; background: #fafafa; border-top: 2px solid var(--primary); }
+  .print-view .total-row td:first-child { width: auto; text-align: right; }
 
   /* Подписи и подвал бланка */
   .print-footer {
