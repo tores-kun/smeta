@@ -494,23 +494,84 @@ input, select, textarea { font-family: inherit; }
 .print-view { display: none; }
 
 @media print {
-  header.topbar, .search-bar, .totalbar, #sideMenu, .overlay, .modal, #toast, #settingsScreen, .update-banner { display: none !important; }
+  header.topbar, .search-bar, .totalbar, #sideMenu, .overlay, .modal, #toast, #settingsScreen, .update-banner, #comboBar { display: none !important; }
   body { background: #fff; }
   .content { display: none !important; }
+
+  .print-view, .print-view * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .print-view {
     display: block !important;
     padding: 0;
     color: #000;
     font-family: Arial, sans-serif;
   }
-  .print-view h1 { font-size: 20px; margin-bottom: 4px; }
-  .print-view .meta { font-size: 12px; margin-bottom: 14px; color: #333; }
+
+  /* Шапка бланка */
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+  .print-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .print-brand .bolt { font-size: 15px; }
+  .print-titleblock h1 { margin: 0; font-size: 22px; color: #111; }
+  .print-titleblock .subtitle { font-size: 11px; color: #777; margin-top: 3px; }
+
+  .print-meta { text-align: right; font-size: 12px; white-space: nowrap; }
+  .print-meta-row { margin-bottom: 3px; }
+  .print-meta-row .lbl { color: #888; margin-right: 5px; }
+  .print-meta-row .val { font-weight: 700; color: #111; }
+
+  .print-comment { font-size: 11px; color: #555; font-style: italic; margin: -8px 0 14px; }
+
   .print-view table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .print-view th, .print-view td { border: 1px solid #999; padding: 5px 7px; text-align: left; }
-  .print-view th { background: #eee; }
-  .print-view .num, .print-view td:nth-child(4), .print-view td:nth-child(5), .print-view td:nth-child(6) { text-align: right; }
-  .print-view .cat-row td { background: #f2f2f2; font-weight: 700; }
-  .print-view .total-row td { font-weight: 700; font-size: 13px; }
+  .print-view th, .print-view td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+  .print-view th { background: var(--primary); color: #fff; font-weight: 600; border-color: var(--primary); }
+  .print-view th:first-child, .print-view td:first-child { text-align: center; width: 34px; }
+  .print-view .num, .print-view td:nth-child(4), .print-view td:nth-child(5), .print-view td:nth-child(6),
+  .print-view th:nth-child(4), .print-view th:nth-child(5), .print-view th:nth-child(6) { text-align: right; }
+  .print-view .cat-row td { background: #f2f2f2; font-weight: 700; color: var(--primary-dark); }
+  .print-view .total-row td { font-weight: 700; font-size: 13px; background: #fafafa; border-top: 2px solid var(--primary); }
+
+  /* Подписи и подвал бланка */
+  .print-footer {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+  }
+  .print-sign { width: 46%; }
+  .print-sign .line { border-bottom: 1px solid #333; height: 32px; }
+  .print-sign .cap { font-size: 11px; color: #777; margin-top: 4px; }
+
+  .print-page-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 10px;
+    color: #aaa;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+  }
+
+  @page { margin: 14mm 12mm; }
 }
 
 /* Combo bar + sheet */

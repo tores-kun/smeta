@@ -740,14 +740,22 @@ function printEstimate() {
     return;
   }
   const total = computeTotal();
+  const itemsCount = rows.filter(r => r.type === 'item').length;
 
-  let html = `<h1>${escapeHtml(est.name)}</h1>`;
-  const metaBits = [];
-  if (est.client) metaBits.push('Клиент: ' + escapeHtml(est.client));
-  if (est.address) metaBits.push('Объект: ' + escapeHtml(est.address));
-  metaBits.push('Дата: ' + (est.date || todayISO()));
-  html += `<div class="meta">${metaBits.join(' &nbsp;·&nbsp; ')}</div>`;
-  if (est.comment) html += `<div class="meta">${escapeHtml(est.comment)}</div>`;
+  let html = `
+    <div class="print-header">
+      <div class="print-titleblock">
+        <div class="print-brand"><span class="bolt">⚡</span><span>Смета электрика</span></div>
+        <h1>${escapeHtml(est.name)}</h1>
+        <div class="subtitle">Смета на электромонтажные работы &nbsp;·&nbsp; ${itemsCount} ${itemsWord(itemsCount)}</div>
+      </div>
+      <div class="print-meta">
+        ${est.client ? `<div class="print-meta-row"><span class="lbl">Клиент</span><span class="val">${escapeHtml(est.client)}</span></div>` : ''}
+        ${est.address ? `<div class="print-meta-row"><span class="lbl">Объект</span><span class="val">${escapeHtml(est.address)}</span></div>` : ''}
+        <div class="print-meta-row"><span class="lbl">Дата</span><span class="val">${est.date || todayISO()}</span></div>
+      </div>
+    </div>`;
+  if (est.comment) html += `<div class="print-comment">${escapeHtml(est.comment)}</div>`;
 
   html += '<table><thead><tr><th>№</th><th>Наименование работ</th><th>Ед. изм.</th><th>Цена, BYN</th><th>Кол-во</th><th>Сумма, BYN</th></tr></thead><tbody>';
   rows.forEach(r => {
@@ -760,8 +768,22 @@ function printEstimate() {
   html += `<tr class="total-row"><td colspan="5">ИТОГО</td><td>${formatMoney(total)}</td></tr>`;
   html += '</tbody></table>';
 
+  html += `
+    <div class="print-footer">
+      <div class="print-sign"><div class="line"></div><div class="cap">Исполнитель &nbsp;/&nbsp; подпись, ФИО</div></div>
+      <div class="print-sign"><div class="line"></div><div class="cap">Заказчик &nbsp;/&nbsp; подпись, ФИО</div></div>
+    </div>
+    <div class="print-page-footer">Смета электрика &nbsp;·&nbsp; сформировано ${todayISO()}</div>`;
+
   document.getElementById('printView').innerHTML = html;
   window.print();
+}
+
+function itemsWord(n) {
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return 'позиция';
+  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return 'позиции';
+  return 'позиций';
 }
 
 // ---------- export: excel ----------
