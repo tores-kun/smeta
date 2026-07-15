@@ -40,7 +40,10 @@ const DEFAULT_COMBOS = [
     name: 'Точка освещения',
     multiplierLabel: 'Количество светильников',
     params: [
-      { id: 'material', label: 'Материал стены/потолка (штроба)', options: [
+      { id: 'routing', label: 'Способ прокладки', options: [
+        { id: 'shtroba', label: 'Штроба' }, { id: 'korob', label: 'Короб' }
+      ] },
+      { id: 'material', label: 'Материал стены/потолка (для штробы)', options: [
         { id: 'beton', label: 'Бетон' }, { id: 'kirpich', label: 'Кирпич' }, { id: 'gs', label: 'Пеноблок/г-силикат' }
       ] },
       { id: 'fixture', label: 'Светильник', options: [
@@ -50,13 +53,15 @@ const DEFAULT_COMBOS = [
       ] }
     ],
     inputs: [
-      { id: 'length', label: 'Штроба + кабель на точку, м', default: 3 }
+      { id: 'route', label: 'Штроба/короб на точку, м', default: 3 },
+      { id: 'cable', label: 'Кабель на точку, м', default: 3 }
     ],
     lines: [
-      { code: '1.4', fromInput: 'length', when: { material: 'beton' } },
-      { code: '1.6', fromInput: 'length', when: { material: 'kirpich' } },
-      { code: '1.8', fromInput: 'length', when: { material: 'gs' } },
-      { code: '2.4', fromInput: 'length' },
+      { code: '1.4', fromInput: 'route', when: { material: 'beton', routing: 'shtroba' } },
+      { code: '1.6', fromInput: 'route', when: { material: 'kirpich', routing: 'shtroba' } },
+      { code: '1.8', fromInput: 'route', when: { material: 'gs', routing: 'shtroba' } },
+      { code: '2.1', fromInput: 'route', when: { routing: 'korob' } },
+      { code: '2.4', fromInput: 'cable' },
       { code: '5.4', qty: 1, when: { fixture: 'tochechny' } },
       { code: '5.5', qty: 1, when: { fixture: 'bra' } },
       { code: '5.6', qty: 1, when: { fixture: 'slozhnaya' } },
@@ -83,7 +88,8 @@ const DEFAULT_COMBOS = [
     ],
     inputs: [
       { id: 'modules', label: 'Модулей автоматики', default: 0 },
-      { id: 'lines_out', label: 'Отходящих линий (жилы + прозвонка)', default: 0 }
+      { id: 'lines_wire', label: 'Отходящих линий (подсоединение жил, ×3)', default: 0 },
+      { id: 'lines_test', label: 'Линий на прозвонку', default: 0 }
     ],
     lines: [
       { code: '4.1', qty: 1, when: { panelType: 'uchet' } },
@@ -94,8 +100,8 @@ const DEFAULT_COMBOS = [
       { code: '1.14', qty: 1, when: { niche: 'kirpich' } },
       { code: '1.15', qty: 1, when: { niche: 'penoblok' } },
       { code: '4.7', fromInput: 'modules' },
-      { code: '4.5', fromInputTimes: { input: 'lines_out', factor: 3 } },
-      { code: '4.8', fromInput: 'lines_out' }
+      { code: '4.5', fromInputTimes: { input: 'lines_wire', factor: 3 } },
+      { code: '4.8', fromInput: 'lines_test' }
     ]
   },
   {
