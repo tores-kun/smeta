@@ -167,15 +167,9 @@ const DEFAULT_COMBOS = [
   }
 ];
 
+// Комбо пока не редактируются пользователем (это версия 2 по плану), поэтому просто
+// всегда отдаём свежую копию встроенного набора — так багфиксы и новые комбо доходят
+// до всех сразу при обновлении приложения, без залипания в localStorage.
 function loadCombos() {
-  const raw = localStorage.getItem('smeta:combos');
-  if (raw) {
-    try { return JSON.parse(raw); } catch (e) { /* fall through */ }
-  }
-  const cloned = JSON.parse(JSON.stringify(DEFAULT_COMBOS));
-  localStorage.setItem('smeta:combos', JSON.stringify(cloned));
-  return cloned;
-}
-function saveCombos() {
-  localStorage.setItem('smeta:combos', JSON.stringify(combos));
+  return JSON.parse(JSON.stringify(DEFAULT_COMBOS));
 }
