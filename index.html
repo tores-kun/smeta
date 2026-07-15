@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e5f4f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Смета">
+<title>Смета электрика</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button id="menuBtn" class="icon-btn" aria-label="Сметы">☰</button>
+  <div class="topbar-title">
+    <div id="estimateName" class="estimate-name">Смета</div>
+    <div id="estimateSub" class="estimate-sub"></div>
+  </div>
+  <button id="settingsBtn" class="icon-btn" aria-label="Настройки">⚙</button>
+</header>
+
+<div id="updateBanner" class="update-banner hidden">
+  <span>Доступно обновление приложения</span>
+  <button id="updateReloadBtn" class="btn btn-primary btn-sm">Обновить</button>
+</div>
+
+<div id="searchBar" class="search-bar">
+  <input id="searchInput" type="text" placeholder="Поиск по прайсу…" autocomplete="off">
+  <div class="filter-chips">
+    <button id="filterMineBtn" class="chip active" data-mode="mine">Мои</button>
+    <button id="filterAllBtn" class="chip" data-mode="all">Все</button>
+  </div>
+</div>
+
+<div id="comboBar" class="combo-bar"></div>
+
+<main id="content" class="content"></main>
+
+<footer class="totalbar">
+  <div class="total-row">
+    <span>Итого</span>
+    <span id="totalSum">0.00 BYN</span>
+  </div>
+  <div class="total-actions">
+    <button id="printBtn" class="btn btn-outline">Печать / PDF</button>
+    <button id="excelBtn" class="btn btn-outline">Excel</button>
+    <button id="clearBtn" class="btn btn-ghost">Очистить</button>
+  </div>
+</footer>
+
+<!-- Side menu: estimates list -->
+<div id="sideMenuOverlay" class="overlay hidden"></div>
+<aside id="sideMenu" class="side-menu hidden">
+  <div class="side-menu-header">
+    <h2>Мои сметы</h2>
+    <button id="closeMenuBtn" class="icon-btn">✕</button>
+  </div>
+  <button id="newEstimateBtn" class="btn btn-primary full-width">+ Новая смета</button>
+  <div id="estimatesList" class="estimates-list"></div>
+  <div id="appVersionLabel" class="app-version-label"></div>
+</aside>
+
+<!-- Settings screen -->
+<div id="settingsScreen" class="settings-screen hidden">
+  <header class="topbar">
+    <button id="settingsBackBtn" class="icon-btn" aria-label="Назад">←</button>
+    <div class="topbar-title"><div class="estimate-name">Настройки расценок</div></div>
+    <button id="settingsAddBtn" class="icon-btn" aria-label="Добавить позицию">+</button>
+  </header>
+  <div class="search-bar">
+    <input id="settingsSearchInput" type="text" placeholder="Поиск по прайсу…" autocomplete="off">
+  </div>
+  <div id="settingsHiddenBar" class="settings-hidden-bar hidden">
+    <span id="settingsHiddenCount"></span>
+    <button id="settingsShowAllBtn" class="add-item-link">Показать все</button>
+  </div>
+  <div id="settingsContent" class="content settings-content"></div>
+</div>
+
+<!-- Estimate info modal -->
+<div id="infoModalOverlay" class="overlay hidden"></div>
+<div id="infoModal" class="modal hidden">
+  <h2>Данные сметы</h2>
+  <label>Название сметы<input id="infoName" type="text" placeholder="Напр. Квартира на Ленина 12"></label>
+  <label>Клиент<input id="infoClient" type="text" placeholder="ФИО клиента"></label>
+  <label>Объект / адрес<input id="infoAddress" type="text" placeholder="Адрес объекта"></label>
+  <label>Дата<input id="infoDate" type="date"></label>
+  <label>Комментарий<textarea id="infoComment" rows="2" placeholder="Необязательно"></textarea></label>
+  <div class="modal-actions">
+    <button id="infoCancelBtn" class="btn btn-ghost">Отмена</button>
+    <button id="infoSaveBtn" class="btn btn-primary">Сохранить</button>
+  </div>
+</div>
+
+<!-- Add custom item modal -->
+<div id="addItemOverlay" class="overlay hidden"></div>
+<div id="addItemModal" class="modal hidden">
+  <h2>Новая позиция</h2>
+  <label>Раздел
+    <select id="addItemCat"></select>
+  </label>
+  <label>Наименование работы<input id="addItemName" type="text"></label>
+  <label>Ед. изм.<input id="addItemUnit" type="text" placeholder="шт., м.п., м² …"></label>
+  <label>Цена, BYN<input id="addItemPrice" type="number" step="0.01" min="0"></label>
+  <div class="modal-actions">
+    <button id="addItemCancelBtn" class="btn btn-ghost">Отмена</button>
+    <button id="addItemSaveBtn" class="btn btn-primary">Добавить</button>
+  </div>
+</div>
+
+<!-- Combo sheet -->
+<div id="comboSheetOverlay" class="overlay hidden"></div>
+<div id="comboSheet" class="sheet hidden">
+  <div class="sheet-handle"></div>
+  <h2 id="comboSheetTitle"></h2>
+  <div id="comboSheetParams"></div>
+  <div id="comboSheetInputs"></div>
+  <div id="comboSheetMultiplier" class="combo-multiplier">
+    <span id="comboMultiplierLabel"></span>
+    <div class="qty-wrap">
+      <button class="qty-btn" id="comboMultDec" type="button">−</button>
+      <input class="qty-input" id="comboMultInput" type="number" min="1" value="1">
+      <button class="qty-btn" id="comboMultInc" type="button">+</button>
+    </div>
+  </div>
+  <div id="comboSheetPreview" class="combo-preview"></div>
+  <div class="modal-actions">
+    <button id="comboSheetCancelBtn" class="btn btn-ghost">Отмена</button>
+    <button id="comboSheetAddBtn" class="btn btn-primary">Добавить в смету</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden">
+  <span id="toastMsg"></span>
+  <button id="toastActionBtn" class="toast-action hidden"></button>
+</div>
+
+<!-- Print view (hidden, used only for printing) -->
+<div id="printView" class="print-view"></div>
+
+<script src="version.js"></script>
+<script src="data.js"></script>
+<script src="combos.js"></script>
+<script src="app.js"></script>
+<script src="combo-ui.js"></script>
+</body>
+</html>
