@@ -406,6 +406,7 @@ input, select, textarea { font-family: inherit; }
   margin-bottom: 12px;
 }
 .side-menu-header h2 { font-size: 17px; margin: 0; }
+.side-menu-header-actions { display: flex; align-items: center; gap: 2px; }
 
 .estimates-list { display: flex; flex-direction: column; gap: 8px; }
 .estimate-card {
@@ -415,13 +416,14 @@ input, select, textarea { font-family: inherit; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 .estimate-card.active { border-color: var(--primary); background: #f2f8f5; }
 .estimate-card-main { min-width: 0; flex: 1; }
 .estimate-card-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .estimate-card-meta { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.estimate-card-del { background: none; border: none; color: var(--danger); font-size: 15px; flex-shrink: 0; }
+.estimate-card-export { background: none; border: none; color: var(--text-muted); font-size: 14px; flex-shrink: 0; padding: 4px; }
+.estimate-card-del { background: none; border: none; color: var(--danger); font-size: 15px; flex-shrink: 0; padding: 4px; }
 
 .modal {
   position: fixed;
@@ -458,6 +460,61 @@ input, select, textarea { font-family: inherit; }
   margin-top: 4px;
 }
 .modal-actions .btn { flex: 1; }
+
+.modal-wide { width: min(520px, 94vw); }
+
+.import-summary-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+.import-summary-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.import-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.import-diff-bulk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.import-diff-bulk button {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--primary-dark);
+}
+.import-diff-row {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.import-diff-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.import-diff-code { font-weight: 400; color: var(--text-muted); font-size: 11px; }
+.import-diff-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.import-diff-opt:last-child { margin-bottom: 0; }
+.import-diff-opt input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
 
 .toast {
   position: fixed;

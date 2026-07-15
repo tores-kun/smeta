@@ -395,6 +395,18 @@ function bindEvents() {
   document.getElementById('addItemOverlay').addEventListener('click', closeAddItemModal);
   document.getElementById('addItemSaveBtn').addEventListener('click', saveAddItemModal);
 
+  // импорт / экспорт смет
+  document.getElementById('importEstimateBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+  document.getElementById('importFileInput').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleImportFile(file);
+  });
+  document.getElementById('importCancelBtn').addEventListener('click', closeImportModal);
+  document.getElementById('importModalOverlay').addEventListener('click', closeImportModal);
+  document.getElementById('importConfirmBtn').addEventListener('click', confirmImport);
+
   // export / actions
   document.getElementById('printBtn').addEventListener('click', printEstimate);
   document.getElementById('excelBtn').addEventListener('click', exportExcel);
@@ -492,6 +504,7 @@ function renderSideMenu() {
         <div class="estimate-card-name">${escapeHtml(est.name)}</div>
         <div class="estimate-card-meta">${escapeHtml(est.client || 'без клиента')} · ${formatMoney(total)} BYN</div>
       </div>
+      <button class="estimate-card-export" data-action="export-estimate" data-id="${est.id}" title="Сохранить в файл">📤</button>
       <button class="estimate-card-del" data-action="delete-estimate" data-id="${est.id}">🗑</button>
     `;
     list.appendChild(card);
@@ -503,6 +516,12 @@ function renderSideMenu() {
       saveActiveId();
       closeSideMenu();
       renderAll();
+    });
+  });
+  list.querySelectorAll('[data-action="export-estimate"]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportEstimate(el.dataset.id);
     });
   });
   list.querySelectorAll('[data-action="delete-estimate"]').forEach(el => {
@@ -828,6 +847,193 @@ async function exportExcel() {
   XLSX.utils.book_append_sheet(wb, ws, 'Смета');
   const filename = (est.name || 'Смета').replace(/[\\/:*?"<>|]/g, '_') + '.xlsx';
   XLSX.writeFile(wb, filename);
+}
+
+// ---------- импорт / экспорт смет ----------
+
+function exportEstimate(id) {
+  const est = estimates[id];
+  if (!est) return;
+  const prices = {};
+  Object.keys(est.quantities || {}).forEach(code => {
+    const found = findItem(code);
+    if (found) prices[code] = { name: found.item.name, unit: found.item.unit, price: found.item.price };
+  });
+  const payload = {
+    type: 'smeta-elektrika-estimate',
+    formatVersion: 1,
+    appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : null,
+    exportedAt: new Date().toISOString(),
+    estimate: {
+      name: est.name,
+      client: est.client,
+      address: est.address,
+      date: est.date,
+      comment: est.comment,
+      quantities: est.quantities
+    },
+    prices
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (est.name || 'Смета').replace(/[\\/:*?"<>|]/g, '_') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('Файл сметы сохранён');
+}
+
+let pendingImport = null; // { payload, diffs, newItems }
+
+function handleImportFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let payload;
+    try { payload = JSON.parse(reader.result); }
+    catch (e) { showToast('Файл повреждён или не является сметой'); return; }
+    if (!payload || payload.type !== 'smeta-elektrika-estimate' || !payload.estimate) {
+      showToast('Это не файл сметы «Смета электрика»');
+      return;
+    }
+
+    const quantities = payload.estimate.quantities || {};
+    const filePrices = payload.prices || {};
+    const diffs = [];
+    const newItems = [];
+
+    Object.keys(quantities).forEach(code => {
+      const meta = filePrices[code];
+      const found = findItem(code);
+      if (!found) {
+        newItems.push({
+          code,
+          name: (meta && meta.name) || code,
+          unit: (meta && meta.unit) || '',
+          price: (meta && typeof meta.price === 'number') ? meta.price : 0
+        });
+        return;
+      }
+      if (meta && typeof meta.price === 'number' && Math.abs(meta.price - found.item.price) > 0.001) {
+        diffs.push({ code, name: found.item.name, unit: found.item.unit, filePrice: meta.price, currentPrice: found.item.price });
+      }
+    });
+
+    pendingImport = { payload, diffs, newItems };
+    openImportModal();
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function openImportModal() {
+  const { payload, diffs, newItems } = pendingImport;
+  const quantities = payload.estimate.quantities || {};
+  const itemsCount = Object.keys(quantities).length;
+
+  const summary = document.getElementById('importSummary');
+  summary.innerHTML = `
+    <div class="import-summary-title">${escapeHtml(payload.estimate.name || 'Смета без названия')}</div>
+    <div class="import-summary-sub">${itemsCount} ${itemsWord(itemsCount)}${payload.estimate.client ? ' · ' + escapeHtml(payload.estimate.client) : ''}</div>
+  `;
+
+  const listEl = document.getElementById('importDiffList');
+  listEl.innerHTML = '';
+
+  if (newItems.length > 0) {
+    const note = document.createElement('div');
+    note.className = 'import-note';
+    note.textContent = `Новых позиций, которых нет в вашем прайсе (добавим автоматически): ${newItems.length}`;
+    listEl.appendChild(note);
+  }
+
+  if (diffs.length === 0) {
+    const ok = document.createElement('div');
+    ok.className = 'import-note';
+    ok.textContent = 'Цены совпадают с вашим текущим прайсом — расхождений нет.';
+    listEl.appendChild(ok);
+  } else {
+    const bulk = document.createElement('div');
+    bulk.className = 'import-diff-bulk';
+    bulk.innerHTML = `
+      <span>Цены отличаются — ${diffs.length} поз.:</span>
+      <button type="button" data-bulk="current">Оставить наши</button>
+      <button type="button" data-bulk="file">Взять из файла</button>
+    `;
+    listEl.appendChild(bulk);
+    bulk.querySelector('[data-bulk="current"]').addEventListener('click', () => setAllDiffChoice('current'));
+    bulk.querySelector('[data-bulk="file"]').addEventListener('click', () => setAllDiffChoice('file'));
+
+    diffs.forEach((d, idx) => {
+      const row = document.createElement('div');
+      row.className = 'import-diff-row';
+      row.innerHTML = `
+        <div class="import-diff-name">${escapeHtml(d.name)} <span class="import-diff-code">${d.code}</span></div>
+        <label class="import-diff-opt"><input type="radio" name="diff-${idx}" value="current" checked> Наша цена: ${formatMoney(d.currentPrice)} BYN</label>
+        <label class="import-diff-opt"><input type="radio" name="diff-${idx}" value="file"> Из файла: ${formatMoney(d.filePrice)} BYN</label>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('importModal').classList.remove('hidden');
+  document.getElementById('importModalOverlay').classList.remove('hidden');
+}
+
+function setAllDiffChoice(value) {
+  document.querySelectorAll('#importDiffList .import-diff-row').forEach(row => {
+    const radio = row.querySelector(`input[value="${value}"]`);
+    if (radio) radio.checked = true;
+  });
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').classList.add('hidden');
+  document.getElementById('importModalOverlay').classList.add('hidden');
+  pendingImport = null;
+  document.getElementById('importFileInput').value = '';
+}
+
+function confirmImport() {
+  if (!pendingImport) return;
+  const { payload, diffs, newItems } = pendingImport;
+  let priceListChanged = false;
+
+  diffs.forEach((d, idx) => {
+    const checked = document.querySelector(`input[name="diff-${idx}"]:checked`);
+    const choice = checked ? checked.value : 'current';
+    if (choice === 'file') {
+      const found = findItem(d.code);
+      if (found) { found.item.price = d.filePrice; priceListChanged = true; }
+    }
+  });
+
+  if (newItems.length > 0) {
+    const cat = priceData.categories[priceData.categories.length - 1];
+    newItems.forEach(ni => {
+      cat.items.push({ code: ni.code, name: ni.name, unit: ni.unit, price: ni.price, custom: true });
+    });
+    priceListChanged = true;
+  }
+
+  if (priceListChanged) savePriceData();
+
+  const est = newEstimateObj(payload.estimate.name || 'Импортированная смета');
+  est.client = payload.estimate.client || '';
+  est.address = payload.estimate.address || '';
+  est.date = payload.estimate.date || todayISO();
+  est.comment = payload.estimate.comment || '';
+  est.quantities = Object.assign({}, payload.estimate.quantities || {});
+  estimates[est.id] = est;
+  activeId = est.id;
+  saveEstimates();
+  saveActiveId();
+
+  closeImportModal();
+  closeSideMenu();
+  renderAll();
+  showToast('Смета импортирована');
 }
 
 // ---------- service worker ----------

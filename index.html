@@ -59,9 +59,13 @@
 <aside id="sideMenu" class="side-menu hidden">
   <div class="side-menu-header">
     <h2>Мои сметы</h2>
-    <button id="closeMenuBtn" class="icon-btn">✕</button>
+    <div class="side-menu-header-actions">
+      <button id="importEstimateBtn" class="icon-btn" aria-label="Импортировать смету" title="Импортировать смету из файла">📥</button>
+      <button id="closeMenuBtn" class="icon-btn">✕</button>
+    </div>
   </div>
   <button id="newEstimateBtn" class="btn btn-primary full-width">+ Новая смета</button>
+  <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
   <div id="estimatesList" class="estimates-list"></div>
   <div id="appVersionLabel" class="app-version-label"></div>
 </aside>
@@ -111,6 +115,18 @@
   <div class="modal-actions">
     <button id="addItemCancelBtn" class="btn btn-ghost">Отмена</button>
     <button id="addItemSaveBtn" class="btn btn-primary">Добавить</button>
+  </div>
+</div>
+
+<!-- Импорт сметы: сверка цен с текущим прайсом -->
+<div id="importModalOverlay" class="overlay hidden"></div>
+<div id="importModal" class="modal modal-wide hidden">
+  <h2>Импорт сметы</h2>
+  <div id="importSummary" class="import-summary"></div>
+  <div id="importDiffList" class="import-diff-list"></div>
+  <div class="modal-actions">
+    <button id="importCancelBtn" class="btn btn-ghost">Отмена</button>
+    <button id="importConfirmBtn" class="btn btn-primary">Импортировать</button>
   </div>
 </div>
 
