@@ -17,7 +17,7 @@ const DEFAULT_COMBOS = [
       ] }
     ],
     inputs: [
-      { id: 'cable', label: 'Кабель на точку, м (1,5-2,5 мм²)', default: 0 }
+      { id: 'cable', label: 'Кабель + штроба/короб на точку, м (1,5-2,5 мм²)', default: 0 }
     ],
     lines: [
       { code: '1.1', qty: 1, when: { material: 'beton', mount: 'flush' } },
@@ -26,7 +26,11 @@ const DEFAULT_COMBOS = [
       { code: '3.2', qty: 1, when: { mount: 'flush' } },
       { code: '3.3', qty: 1, when: { mount: 'flush' } },
       { code: '3.4', qty: 1, when: { mount: 'open' } },
-      { code: '2.4', fromInput: 'cable' }
+      { code: '2.4', fromInput: 'cable' },
+      { code: '1.4', fromInput: 'cable', when: { material: 'beton', mount: 'flush' } },
+      { code: '1.6', fromInput: 'cable', when: { material: 'kirpich', mount: 'flush' } },
+      { code: '1.8', fromInput: 'cable', when: { material: 'gs', mount: 'flush' } },
+      { code: '2.1', fromInput: 'cable', when: { mount: 'open' } }
     ]
   },
   {
