@@ -146,6 +146,18 @@ input, select, textarea { font-family: inherit; }
   font-weight: 600;
 }
 
+.settings-backup-section {
+  padding: 4px 12px 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+.settings-backup-actions {
+  display: flex;
+  gap: 10px;
+}
+.settings-backup-actions .btn { flex: 1; }
+
 .search-bar {
   position: sticky;
   top: 0;

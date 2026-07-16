@@ -106,6 +106,14 @@
       </button>
     </div>
   </div>
+  <div class="settings-backup-section">
+    <div class="settings-section-label">Резервная копия настроек (расценки, свои позиции, скрытые)</div>
+    <div class="settings-backup-actions">
+      <button type="button" id="exportSettingsBtn" class="btn btn-outline btn-sm">Экспорт в файл</button>
+      <button type="button" id="importSettingsBtn" class="btn btn-outline btn-sm">Импорт из файла</button>
+    </div>
+    <input type="file" id="importSettingsFileInput" accept="application/json,.json" class="hidden">
+  </div>
   <div class="search-bar">
     <input id="settingsSearchInput" type="text" placeholder="Поиск по прайсу…" autocomplete="off">
   </div>

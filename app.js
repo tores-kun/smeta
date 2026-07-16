@@ -365,6 +365,15 @@ function bindEvents() {
   document.getElementById('settingsBtn').addEventListener('click', openSettings);
   document.getElementById('settingsBackBtn').addEventListener('click', closeSettings);
   document.getElementById('settingsAddBtn').addEventListener('click', () => openAddItemModal());
+  document.getElementById('exportSettingsBtn').addEventListener('click', exportSettings);
+  document.getElementById('importSettingsBtn').addEventListener('click', () => {
+    document.getElementById('importSettingsFileInput').click();
+  });
+  document.getElementById('importSettingsFileInput').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleImportSettingsFile(file);
+    e.target.value = '';
+  });
   document.querySelectorAll('.print-header-option').forEach(btn => {
     btn.addEventListener('click', () => {
       printHeaderTheme = btn.dataset.theme;
@@ -904,6 +913,80 @@ async function exportExcel() {
   XLSX.utils.book_append_sheet(wb, ws, 'Смета');
   const filename = (est.name || 'Смета').replace(/[\\/:*?"<>|]/g, '_') + '.xlsx';
   XLSX.writeFile(wb, filename);
+}
+
+// ---------- резервная копия настроек (прайс, скрытые, тема шапки) ----------
+
+function exportSettings() {
+  const payload = {
+    type: 'smeta-elektrika-settings',
+    formatVersion: 1,
+    appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : null,
+    exportedAt: new Date().toISOString(),
+    priceData,
+    hiddenCodes: [...hiddenCodes],
+    printHeaderTheme,
+    showAllMode
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'smeta-nastroyki-' + todayISO() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('Настройки сохранены в файл');
+}
+
+function handleImportSettingsFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let payload;
+    try { payload = JSON.parse(reader.result); }
+    catch (e) { showToast('Файл повреждён или не является настройками'); return; }
+    if (!payload || payload.type !== 'smeta-elektrika-settings' || !payload.priceData || !Array.isArray(payload.priceData.categories)) {
+      showToast('Это не файл настроек «Смета электрика»');
+      return;
+    }
+
+    const itemsCount = payload.priceData.categories.reduce((a, c) => a + c.items.length, 0);
+    const customCount = payload.priceData.categories.reduce((a, c) => a + c.items.filter(i => i.custom).length, 0);
+    const hiddenCount = (payload.hiddenCodes || []).length;
+
+    const ok = confirm(
+      `Импортировать настройки?\n\n` +
+      `Позиций в прайсе: ${itemsCount} (из них своих: ${customCount})\n` +
+      `Скрытых позиций: ${hiddenCount}\n\n` +
+      `Текущий прайс, свои позиции и список скрытых будут заменены на данные из файла. ` +
+      `Позиции в уже созданных сметах, которых не окажется в новом прайсе, перестанут отображаться и учитываться в сумме.`
+    );
+    if (!ok) return;
+
+    priceData = payload.priceData;
+    savePriceData();
+
+    hiddenCodes = new Set(payload.hiddenCodes || []);
+    saveHiddenCodes();
+
+    if (PRINT_HEADER_THEMES.includes(payload.printHeaderTheme)) {
+      printHeaderTheme = payload.printHeaderTheme;
+      savePrintHeaderTheme();
+    }
+    if (typeof payload.showAllMode === 'boolean') {
+      showAllMode = payload.showAllMode;
+      saveShowAllMode();
+      document.getElementById('filterMineBtn').classList.toggle('active', !showAllMode);
+      document.getElementById('filterAllBtn').classList.toggle('active', showAllMode);
+    }
+
+    renderSettingsContent();
+    renderPrintHeaderPicker();
+    renderAll();
+    showToast('Настройки импортированы');
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 // ---------- импорт / экспорт смет ----------
