@@ -4,6 +4,8 @@
 
 **Установить:** [tores-kun.github.io/smeta](https://tores-kun.github.io/smeta/)
 
+![Демо: работа с приложением](docs/demo-app.gif)
+
 ![Список работ и расчёт сметы](docs/demo-1-spisok.jpg)
 
 ## Что умеет
