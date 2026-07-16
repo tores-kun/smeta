@@ -15,7 +15,8 @@ const ASSETS = [
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   './assets/header-dark.jpg',
-  './assets/header-light.jpg'
+  './assets/header-light.jpg',
+  './assets/header-kids.jpg'
 ];
 
 self.addEventListener('install', event => {

@@ -64,9 +64,10 @@ function saveShowAllMode() {
   localStorage.setItem(LS_SHOW_ALL, showAllMode ? '1' : '0');
 }
 
+const PRINT_HEADER_THEMES = ['dark', 'light', 'kids', 'none'];
 function loadPrintHeaderTheme() {
   const v = localStorage.getItem(LS_PRINT_HEADER);
-  return (v === 'light' || v === 'dark') ? v : 'dark';
+  return PRINT_HEADER_THEMES.includes(v) ? v : 'dark';
 }
 function savePrintHeaderTheme() {
   localStorage.setItem(LS_PRINT_HEADER, printHeaderTheme);
@@ -813,8 +814,12 @@ function printEstimate() {
   const total = computeTotal();
   const itemsCount = rows.filter(r => r.type === 'item').length;
 
+  const bannerHtml = printHeaderTheme === 'none'
+    ? ''
+    : `<div class="print-banner"><img src="assets/header-${printHeaderTheme}.jpg" alt="Смета электрика" class="print-banner-img"></div>`;
+
   let html = `
-    <div class="print-banner"><img src="assets/header-${printHeaderTheme}.jpg" alt="Смета электрика" class="print-banner-img"></div>
+    ${bannerHtml}
     <div class="print-header">
       <div class="print-titleblock">
         <h1>${escapeHtml(est.name)}</h1>

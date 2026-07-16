@@ -128,6 +128,18 @@ input, select, textarea { font-family: inherit; }
   border-radius: 6px;
   display: block;
 }
+.print-header-option-none {
+  width: 100%;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text-muted);
+  background: var(--bg);
+}
 .print-header-option.active {
   border-color: var(--primary);
   color: var(--primary-dark);
@@ -627,7 +639,7 @@ input, select, textarea { font-family: inherit; }
     font-family: Arial, sans-serif;
   }
 
-  /* Брендированная картинка-шапка сметы */
+  /* Брендированная картинка-шапка сметы — показываем целиком, без обрезки */
   .print-banner {
     margin-bottom: 14px;
     border-radius: 6px;
@@ -636,9 +648,7 @@ input, select, textarea { font-family: inherit; }
   .print-banner-img {
     display: block;
     width: 100%;
-    height: 62mm;
-    object-fit: cover;
-    object-position: top;
+    height: auto;
   }
 
   /* Шапка бланка */
