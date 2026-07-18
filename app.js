@@ -19,10 +19,39 @@ let printHeaderTheme = 'dark'; // 'dark' | 'light' — какую картинк
 
 // ---------- storage ----------
 
+// Добавляет в сохранённый у пользователя прайс новые позиции/разделы, которые появились
+// в DEFAULT_PRICE_DATA после обновления приложения (например, новая работа в прайсе).
+// Собственные цены пользователя, скрытые позиции и добавленные им свои работы не трогаем.
+function mergeNewDefaultItems(stored) {
+  let changed = false;
+  DEFAULT_PRICE_DATA.categories.forEach(defCat => {
+    let cat = stored.categories.find(c => c.id === defCat.id);
+    if (!cat) {
+      stored.categories.push(JSON.parse(JSON.stringify(defCat)));
+      changed = true;
+      return;
+    }
+    defCat.items.forEach(defItem => {
+      const exists = cat.items.some(i => i.code === defItem.code);
+      if (!exists) {
+        cat.items.push(JSON.parse(JSON.stringify(defItem)));
+        changed = true;
+      }
+    });
+  });
+  return changed;
+}
+
 function loadPriceData() {
   const raw = localStorage.getItem(LS_PRICE);
   if (raw) {
-    try { return JSON.parse(raw); } catch (e) { /* fall through */ }
+    try {
+      const parsed = JSON.parse(raw);
+      if (mergeNewDefaultItems(parsed)) {
+        localStorage.setItem(LS_PRICE, JSON.stringify(parsed));
+      }
+      return parsed;
+    } catch (e) { /* fall through */ }
   }
   const cloned = JSON.parse(JSON.stringify(DEFAULT_PRICE_DATA));
   localStorage.setItem(LS_PRICE, JSON.stringify(cloned));
